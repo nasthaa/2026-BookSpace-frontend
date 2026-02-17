@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 
 export default function CreateRoom() {
@@ -25,7 +25,6 @@ export default function CreateRoom() {
     }>({});
 
     const [loading, setLoading] = useState(false);
-
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -66,8 +65,9 @@ export default function CreateRoom() {
                             <div className="text-xl font-bold text-indigo-400">BookSpace</div>
                             <div className="hidden md:flex space-x-4">
                                 <NavItem to="/">Dashboard</NavItem>
-                                <NavItem to="/rooms" active>Rooms</NavItem>
-                                <NavItem to="/bookings">Bookings</NavItem>
+                                <NavItem to="/rooms" active>Room</NavItem>
+                                <NavItem to="/bookings">Booking</NavItem>
+                                <NavItem to="/histories">History</NavItem>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">

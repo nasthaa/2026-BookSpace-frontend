@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 import type { Room } from "../../services/api";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export default function RoomList() {
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -25,6 +24,10 @@ export default function RoomList() {
         setTotal(res.data.total);
     };
     
+    useEffect(() => {
+        fetchRooms();
+    }, [page]);
+    
     const handleEdit = (id: number) => {
         navigate(`/rooms/edit/${id}`);
     };
@@ -34,10 +37,6 @@ export default function RoomList() {
         setOpenDelete(false);
         fetchRooms();
     };
-
-    useEffect(() => {
-        fetchRooms();
-    }, [page]);
 
     return (
         <div className="min-h-screen w-screen bg-gray-900 text-white">
@@ -49,8 +48,9 @@ export default function RoomList() {
                             <div className="text-xl font-bold text-indigo-400">BookSpace</div>
                             <div className="hidden md:flex space-x-4">
                                 <NavItem to="/">Dashboard</NavItem>
-                                <NavItem to="/rooms" active>Rooms</NavItem>
-                                <NavItem to="/bookings">Bookings</NavItem>
+                                <NavItem to="/rooms" active>Room</NavItem>
+                                <NavItem to="/bookings">Booking</NavItem>
+                                <NavItem to="/histories">History</NavItem>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -97,10 +97,10 @@ export default function RoomList() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
-                            {rooms.map((room, i) => (
+                            {rooms.map((room, index) => (
                                 <tr key={room.id} className="hover:bg-slate-800/60">
                                     <td className="px-6 py-4">
-                                        {(page - 1) * pageSize + i + 1}
+                                        {(page - 1) * pageSize + index + 1}
                                     </td>
                                     <td
                                         className="px-6 py-4 text-indigo-400 hover:text-indigo-300 cursor-pointer"
@@ -114,11 +114,8 @@ export default function RoomList() {
                                     <td className="px-6 py-4">{room.capacity}</td>
                                     <td className="px-6 py-4">{room.location}</td>
                                     <td className="px-6 py-4 text-right flex justify-end gap-3">
-                                        <button
-                                            onClick={() => handleEdit(room.id)}
-                                            className="text-indigo-400 hover:text-indigo-300"
-                                        >
-                                            Edit
+                                        <button onClick={() => handleEdit(room.id)} className="text-indigo-400 hover:text-indigo-300">
+                                            <PencilSquareIcon className="h-5 w-5" />
                                         </button>
                                         <button
                                             onClick={() => {
@@ -127,7 +124,7 @@ export default function RoomList() {
                                             }}
                                             className="text-red-400 hover:text-red-300"
                                         >
-                                        Delete
+                                            <TrashIcon className="h-5 w-5" />
                                         </button>
                                     </td>
                                 </tr>
@@ -144,27 +141,27 @@ export default function RoomList() {
                     <div className="flex gap-1">
                         <button
                             disabled={page === 1}
-                            onClick={() => setPage(p => p - 1)}
+                            onClick={() => setPage(page => page - 1)}
                             className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-40"
                         >
                             Prev
                         </button>
-                        {Array.from({ length: totalPages }).map((_, i) => (
+                        {Array.from({ length: totalPages }).map((_, index) => (
                             <button
-                                key={i}
-                                onClick={() => setPage(i + 1)}
+                                key={index}
+                                onClick={() => setPage(index + 1)}
                                 className={`px-3 py-1 rounded ${
-                                page === i + 1
+                                page === index + 1
                                     ? "bg-indigo-600"
                                     : "bg-white/5 hover:bg-white/10"
                                 }`}
                             >
-                                {i + 1}
+                                {index + 1}
                             </button>
                         ))}
                         <button
                             disabled={page === totalPages}
-                            onClick={() => setPage(p => p + 1)}
+                            onClick={() => setPage(page => page + 1)}
                             className="px-3 py-1 rounded bg-white/5 hover:bg-white/10 disabled:opacity-40"
                         >
                             Next
@@ -219,18 +216,9 @@ export default function RoomList() {
                             Room Detail
                         </DialogTitle>
                         <div className="space-y-3 text-sm">
-                            <div>
-                                <p className="text-gray-400">Room Name</p>
-                                <p className="font-semibold">{selectedRoom?.name}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-400">Capacity</p>
-                                <p className="font-semibold">{selectedRoom?.capacity}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-400">Location</p>
-                                <p className="font-semibold">{selectedRoom?.location}</p>
-                            </div>
+                            <Detail label="Room Name" value={selectedRoom?.name} />
+                            <Detail label="Capacity" value={String(selectedRoom?.capacity)} />
+                            <Detail label="Location" value={selectedRoom?.location} />
                         </div>
                         <div className="mt-6 flex justify-end">
                             <button
@@ -247,11 +235,20 @@ export default function RoomList() {
     );
 }
 
+function Detail({ label, value }: { label: string; value?: string }) {
+    return (
+        <div>
+            <p className="text-gray-400">{label}</p>
+            <p className="font-semibold">{value}</p>
+        </div>
+    );
+}
+
 function ButtonLink({ to, children }: { to: string; children: React.ReactNode }) {
     return (
         <Link
             to={to} 
-            className="bg-indigo-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition"
+            className="bg-indigo-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-sm font-medium text-white hover:text-white transition"
         >
             {children}
         </Link>

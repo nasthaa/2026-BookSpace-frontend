@@ -13,3 +13,15 @@ export type Room = {
     capacity: number;
     location: string;
 };
+
+export type Booking = {
+    id: number;
+    borrowerName: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    room: {
+        id: number;
+        name: string;
+    };
+};

@@ -1,47 +1,32 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { api } from "../../services/api";
 import type { Booking } from "../../services/api";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
-import { PencilSquareIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function BookingList() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [openDetail, setOpenDetail] = useState(false);
-    const [openDelete, setOpenDelete] = useState(false);
+    const [search, setSearch] = useState("");
+    const [status, setStatus] = useState("All");
 
     const [page, setPage] = useState(1);
     const pageSize = 8;
     const [total, setTotal] = useState(0);
     const totalPages = Math.ceil(total / pageSize);
 
-    const navigate = useNavigate();
-
     const fetchBookings = async () => {
-        const res = await api.get(`/bookings?page=${page}&pageSize=${pageSize}`);
+        const res = await api.get(
+            `/histories?page=${page}&pageSize=${pageSize}&search=${search}&status=${status}`
+        );
         setBookings(res.data.data);
         setTotal(res.data.total);
     };
 
     useEffect(() => {
         fetchBookings();
-    }, [page]);
-    
-    const handleEdit = (id: number) => {
-        navigate(`/bookings/edit/${id}`);
-    };
-    
-    const handleDelete = async (id: number) => {
-        await api.delete(`/bookings/${id}`);
-        setOpenDelete(false);
-        fetchBookings();
-    };
-    
-    const updateStatus = async (id: number, status: string) => {
-        await api.patch(`/bookings/${id}/status`, { status });
-        fetchBookings();
-    };
+    }, [page, search, status]);
 
     const getStatusBadge = (status: string) => {
         let color = "";
@@ -81,89 +66,6 @@ export default function BookingList() {
         );
     };
 
-    const renderActionButtons = (book: Booking) => {
-        const status = book.status;
-
-        if (status === "Pending") {
-            return (
-                <>
-                    <button
-                        onClick={() => updateStatus(book.id, "Approved")}
-                        className="text-green-400 hover:text-green-300"
-                        title="Approve"
-                    >
-                        <CheckCircleIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => updateStatus(book.id, "Rejected")}
-                        className="text-red-400 hover:text-red-300"
-                        title="Reject"
-                    >
-                        <XMarkIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => handleEdit(book.id)}
-                        className="text-indigo-400 hover:text-indigo-300"
-                        title="Edit"
-                    >
-                        <PencilSquareIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            setSelectedBooking(book);
-                            setOpenDelete(true);
-                        }}
-                        className="text-red-400 hover:text-red-300"
-                        title="Delete"
-                    >
-                        <TrashIcon className="h-5 w-5" />
-                    </button>
-                </>
-            );
-        }
-
-        if (status === "Approved") {
-            return (
-                <>
-                    <button
-                        onClick={() => handleEdit(book.id)}
-                        className="text-indigo-400 hover:text-indigo-300"
-                        title="Edit"
-                    >
-                        <PencilSquareIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                        onClick={() => {
-                            setSelectedBooking(book);
-                            setOpenDelete(true);
-                        }}
-                        className="text-red-400 hover:text-red-300"
-                        title="Delete"
-                    >
-                        <TrashIcon className="h-5 w-5" />
-                    </button>
-                </>
-            );
-        }
-
-        if (status === "OnGoing") {
-            return (
-                <button
-                    onClick={() => {
-                        setSelectedBooking(book);
-                        setOpenDelete(true);
-                    }}
-                    className="text-red-400 hover:text-red-300"
-                    title="Delete"
-                >
-                    <TrashIcon className="h-5 w-5" />
-                </button>
-            );
-        }
-    
-        return null;
-    };
-
     return (
         <div className="min-h-screen w-screen bg-gray-900 text-white">
             {/* NAVBAR */}
@@ -175,8 +77,8 @@ export default function BookingList() {
                             <div className="hidden md:flex space-x-4">
                                 <NavItem to="/">Dashboard</NavItem>
                                 <NavItem to="/rooms">Room</NavItem>
-                                <NavItem to="/bookings" active>Booking</NavItem>
-                                <NavItem to="/histories">History</NavItem>
+                                <NavItem to="/bookings">Booking</NavItem>
+                                <NavItem to="/histories" active>History</NavItem>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -207,9 +109,35 @@ export default function BookingList() {
                             A list of all room booking requests.
                         </p>
                     </div>
-                    <ButtonLink to="/bookings/create">
-                        Create Booking
-                    </ButtonLink>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                        <input
+                            value={search}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setPage(1);
+                            }}
+                            placeholder="Search name or room..."
+                            className="px-3 py-2 rounded-md bg-slate-800 border border-slate-600 text-sm"
+                        />
+
+                        <select
+                            value={status}
+                            onChange={(e) => {
+                                setStatus(e.target.value);
+                                setPage(1);
+                            }}
+                            className="px-3 py-2 rounded-md bg-slate-800 border border-slate-600 text-sm"
+                        >
+                            <option value="All">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="OnGoing">On Going</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="Deleted">Deleted</option>
+                        </select>
+                    </div>
                 </div>
                 <div className="overflow-hidden rounded-xl border border-slate-700">
                     <table className="min-w-full text-sm">
@@ -221,7 +149,6 @@ export default function BookingList() {
                                 <th className="px-6 py-3 text-left">Start</th>
                                 <th className="px-6 py-3 text-left">End</th>
                                 <th className="px-6 py-3 text-left">Status</th>
-                                <th className="px-6 py-3 text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700">
@@ -244,11 +171,6 @@ export default function BookingList() {
                                         <td className="px-6 py-4">{new Date(book.startTime).toLocaleString()}</td>
                                         <td className="px-6 py-4">{new Date(book.endTime).toLocaleString()}</td>
                                         <td className="px-6 py-4">{getStatusBadge(book.status)}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex justify-end gap-2">
-                                                {renderActionButtons(book)}
-                                            </div>
-                                        </td>
                                     </tr>
                                 );
                             })}
@@ -292,44 +214,6 @@ export default function BookingList() {
                     </div>
                 </div>
             </main>
-
-            <Dialog open={openDelete} onClose={setOpenDelete} className="relative z-50">
-                <DialogBackdrop className="fixed inset-0 bg-black/60" />
-                <div className="fixed inset-0 flex items-center justify-center p-4">
-                    <DialogPanel className="w-full max-w-md rounded-xl bg-gray-800 p-6 border border-white/10">
-                        <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 flex items-center justify-center rounded-full bg-red-500/10">
-                                <ExclamationTriangleIcon className="h-6 w-6 text-red-400" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-lg font-semibold text-white">
-                                    Delete Booking
-                                </DialogTitle>
-                                <p className="text-sm text-gray-400">
-                                    Yakin hapus booking oleh <b>{selectedBooking?.borrowerName}</b>?
-                                </p>
-                            </div>
-                        </div>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button
-                                onClick={() => setOpenDelete(false)}
-                                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    if (!selectedBooking) return;
-                                    await handleDelete(selectedBooking.id);
-                                }}
-                                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </DialogPanel>
-                </div>
-            </Dialog>
 
             <Dialog open={openDetail} onClose={setOpenDetail} className="relative z-50">
                 <DialogBackdrop className="fixed inset-0 bg-black/60" />
@@ -385,17 +269,6 @@ function Detail({ label, value }: { label: string; value?: string }) {
             <p className="text-gray-400">{label}</p>
             <p className="font-semibold">{value}</p>
         </div>
-    );
-}
-
-function ButtonLink({ to, children }: { to: string; children: React.ReactNode }) {
-    return (
-        <Link
-            to={to} 
-            className="bg-indigo-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-sm font-medium text-white hover:text-white transition"
-        >
-            {children}
-        </Link>
     );
 }
 

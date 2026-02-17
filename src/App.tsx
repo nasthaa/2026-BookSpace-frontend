@@ -4,6 +4,9 @@ import RoomList from "./pages/rooms/RoomList";
 import CreateRoom from "./pages/rooms/CreateRoom";
 import EditRoom from "./pages/rooms/EditRoom";
 import BookingList from "./pages/bookings/BookingList";
+import CreateBooking from "./pages/bookings/CreateBooking";
+import EditBooking from "./pages/bookings/EditBooking";
+import History from "./pages/histories/History";
 
 export default function App() {
     return (
@@ -13,6 +16,9 @@ export default function App() {
             <Route path="/rooms/create" element={<CreateRoom />} />
             <Route path="/rooms/edit/:id" element={<EditRoom />} />
             <Route path="/bookings" element={<BookingList />} />
+            <Route path="/bookings/create" element={<CreateBooking />} />
+            <Route path="/bookings/edit/:id" element={<EditBooking />} />
+            <Route path="/histories" element={<History />} />
         </Routes>
     );
 }
